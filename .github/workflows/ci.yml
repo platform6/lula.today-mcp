@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # lula's schema changes in the lula repo, so check the generated types daily as well.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, typecheck, test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - name: Worker types are up to date
+        run: npx wrangler types --check
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+
+  lula-types:
+    name: lula database types match the live schema
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+        if: env.SUPABASE_ACCESS_TOKEN != ''
+      - name: Regenerate and compare
+        if: env.SUPABASE_ACCESS_TOKEN != ''
+        run: |
+          npm run gen:types
+          git diff --exit-code src/data/database.types.ts \
+            || { echo "::error::src/data/database.types.ts is stale. Run npm run gen:types and commit."; exit 1; }
+      - name: Skipped
+        if: env.SUPABASE_ACCESS_TOKEN == ''
+        run: echo "::warning::SUPABASE_ACCESS_TOKEN is not set, so the lula types drift check did not run."

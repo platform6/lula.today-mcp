@@ -1,0 +1,37 @@
+{
+  "name": "lula-mcp",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Remote MCP server that lets agents work lula.today boards, with the workflow enforced by the server",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --env=\"\"",
+    "deploy:staging": "wrangler deploy --env=staging",
+    "cf-typegen": "wrangler types",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "test": "vitest run",
+    "check": "biome check . && tsc --noEmit && vitest run",
+    "gen:types": "supabase gen types typescript --remote=hobsxhmxjxyhzyoyoufj --schema public > src/data/database.types.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
+    "agents": "^0.33.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.6.7",
+    "@cloudflare/vitest-plugin": "^1.8.2",
+    "@modelcontextprotocol/client": "^2.4.0",
+    "supabase": "^3.1.0",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.0",
+    "wrangler": "^4.162.0"
+  }
+}
